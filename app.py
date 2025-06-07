@@ -32,16 +32,22 @@ def check_license():
         licenses = load_licenses()
 
         if license_code not in licenses:
-            # ✅ 首次激活：授权码未被使用，绑定机器码
+            # ❌ 授权码不存在，不允许激活
+            return jsonify({"status": "error", "message": "Invalid license code"}), 403
+
+        bound_machine_id = licenses[license_code]
+
+        if bound_machine_id == "":
+            # ✅ 授权码存在，但未绑定，绑定当前机器
             licenses[license_code] = machine_id
             save_licenses(licenses)
             return jsonify({"status": "ok", "message": "License activated"})
 
-        if licenses[license_code] == machine_id:
-            # ✅ 授权码绑定的机器码匹配
+        if bound_machine_id == machine_id:
+            # ✅ 已绑定本机
             return jsonify({"status": "ok", "message": "License valid"})
 
-        # ❌ 授权码存在但绑定了其他机器码
+        # ❌ 授权码已经绑定其他机器
         return jsonify({"status": "error", "message": "License already used on another machine"}), 403
 
     except Exception as e:
